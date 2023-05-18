@@ -5,6 +5,7 @@ const querystring = require("querystring");
 const client_id = process.env.CLIENT_ID;
 const client_secret = process.env.CLIENT_SECRET;
 const redirect_uri = "http://localhost:8080/callback";
+let isLoggedIn = false;
 let access_token;
 let refresh_token;
 
@@ -35,16 +36,37 @@ router.get("/", (req, res) => {
   state = generateRandomString(16);
   var scope = "user-read-private user-read-email";
 
-  res.redirect(
-    "https://accounts.spotify.com/authorize?" +
+  // res.redirect(
+  //   "https://accounts.spotify.com/authorize?" +
+  //     querystring.stringify({
+  //       response_type: "code",
+  //       client_id: client_id,
+  //       scope: scope,
+  //       redirect_uri: redirect_uri,
+  //       state: state,
+  //     })
+  // );
+  res.send({
+    authLink:
+      "https://accounts.spotify.com/authorize?" +
       querystring.stringify({
         response_type: "code",
         client_id: client_id,
         scope: scope,
         redirect_uri: redirect_uri,
         state: state,
-      })
-  );
+      }),
+  });
+});
+
+router.get("/isLoggedIn", (req, res) => {
+  if (access_token !== undefined && refresh_token !== undefined) {
+    console.log(access_token);
+    console.log(refresh_token);
+    res.send({ isLoggedIn: "true" });
+  } else {
+    res.send({ isLoggedIn: "false" });
+  }
 });
 
 router.get("/callback", async (req, res) => {
@@ -76,13 +98,24 @@ router.get("/callback", async (req, res) => {
   );
   access_token = spotifyResponse["data"]["access_token"];
   refresh_token = spotifyResponse["data"]["refresh_token"];
-  // console.log(spotifyResponse);
-  // console.log(refresh_token);
+  console.log(spotifyResponse);
+  console.log(refresh_token);
+  // res.send({ redirect: "http://localhost:3000" });
+  res.redirect("http://localhost:3000");
   // .then((response) => response.json());
   // .then((data) => {
   //   const query = querystring.stringify(data);
   //   res.redirect(`${process.env.CLIENT_REDIRECTURI}?${query}`);
   // });
+});
+
+router.get("/getAuth", (req, res) => {
+  // res.send({ access_token, access_token, refresh_token: refresh_token });
+  console.log("called");
+  // res.body = { message: "hello" };
+  if (access_token !== undefined && refresh_token !== undefined) {
+    res.send({ access_token: access_token, refresh_token: refresh_token });
+  }
 });
 
 router.get("/refresh_token", function (req, res) {
