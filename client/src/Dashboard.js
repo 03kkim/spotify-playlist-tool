@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import useAuth from "./useAuth";
 import SpotifyWebApi from "spotify-web-api-node";
 
@@ -9,6 +9,10 @@ const spotifyApi = new SpotifyWebApi({
 
 const Dashboard = ({ code }) => {
   const accessToken = useAuth(code);
+  const [myData, setMyData] = useState();
+  const [userPlaylists, setUserPlaylists] = useState([]);
+  const [playlistTracks, setPlaylistTracks] = useState([]);
+  const [finishedLoading, setFinishedLoading] = useState(false);
 
   useEffect(() => {
     if (!accessToken) {
@@ -21,14 +25,49 @@ const Dashboard = ({ code }) => {
 
     // Get user details with help of getMe() function
     spotifyApi.getMe().then((data) => {
-      console.log(data);
+      setMyData(data);
     });
-    spotifyApi.getUserPlaylists().then((data) => {
-      console.log(data);
+    spotifyApi.getUserPlaylists().then(async (data) => {
+      const playlists = data.body.items;
+      setUserPlaylists(playlists);
+      for (let i = 0; i < playlists.length; i++) {
+        const tracks = await spotifyApi.getPlaylistTracks(playlists[i].id);
+        const obj = {};
+        obj.id = playlists[i].id;
+        obj.items = tracks.body.items;
+        setPlaylistTracks((oldArray) => [...oldArray, obj]);
+      }
+      setFinishedLoading(true);
     });
   }, [accessToken]);
 
-  return <div>{code}</div>;
+  // useEffect(() => {
+  //   console.log(playlistTracks);
+
+  //   console.log("finished");
+  // }, [playlistTracks]);
+
+  return (
+    <div>
+      Playlists:
+      {userPlaylists.map((playlist, index) => {
+        return (
+          <div>
+            <b key={index}>{playlist.name}</b>
+            {/* {console.log(playlistTracks[index])} */}
+            <div>
+              {finishedLoading &&
+                playlistTracks[index].items.map((item, index) => {
+                  if (item.track !== null) {
+                    return <div>{item.track.name}</div>;
+                  }
+                })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 export default Dashboard;
