@@ -3,6 +3,7 @@ import axios from "axios";
 
 export default function useAuth(code) {
   const [accessToken, setAccessToken] = useState();
+  const [refreshToken, setRefreshToken] = useState();
 
   useEffect(() => {
     axios
@@ -14,6 +15,22 @@ export default function useAuth(code) {
 
         console.log(response.data);
         setAccessToken(response.data.accessToken);
+        setRefreshToken(response.data.refreshToken);
+
+        setTimeout(
+          () => {
+            axios
+              .post("http://localhost:8000/refreshAccessToken", {
+                refreshToken: response.data.refreshToken,
+              })
+              .then((response) => {
+                setAccessToken(response.data.accessToken);
+              });
+          },
+          // (response.data.expiresIn - 1) * 1000
+          10000
+        );
+
         console.log("success");
       })
       .catch(() => {
@@ -23,5 +40,5 @@ export default function useAuth(code) {
       });
   }, [code]);
 
-  return accessToken;
+  return { accessToken, refreshToken };
 }

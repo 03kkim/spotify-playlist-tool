@@ -20,6 +20,15 @@ app.get("/", (req, res) => {
   console.log("Hello World!");
 });
 
+app.post("/refreshAccessToken", (req, res) => {
+  let spotifyApi = new spotifyWebApi(credentials);
+  console.log(req.body.refreshToken);
+  spotifyApi.setRefreshToken(req.body.refreshToken);
+  // const newAccessToken = spotifyApi.refreshAccessToken();
+  // console.log(newAccessToken);
+  spotifyApi.refreshAccessToken().then((data) => res.json(data));
+});
+
 app.post("/login", (req, res) => {
   //  setup
   let spotifyApi = new spotifyWebApi(credentials);
@@ -34,6 +43,8 @@ app.post("/login", (req, res) => {
       // Returning the User's AccessToken in the json formate
       res.json({
         accessToken: data.body.access_token,
+        refreshToken: data.body.refresh_token,
+        expiresIn: data.body.expires_in,
       });
     })
     .catch((err) => {

@@ -20,7 +20,7 @@ const spotifyApi = new SpotifyWebApi({
 });
 
 const Dashboard = ({ code }) => {
-  const accessToken = useAuth(code);
+  const { accessToken, refreshToken } = useAuth(code);
   const [myData, setMyData] = useState();
   const [userPlaylists, setUserPlaylists] = useState([]);
   const [playlistTracks, setPlaylistTracks] = useState([]);
@@ -45,6 +45,7 @@ const Dashboard = ({ code }) => {
 
     // Setting Up the spotifyApi with AccessToken so that we can use its functions anywhere in the component without setting AccessToken value again & again.
     spotifyApi.setAccessToken(accessToken);
+    spotifyApi.setRefreshToken(refreshToken);
 
     // Get user details with help of getMe() function
     spotifyApi.getMe().then((data) => {
