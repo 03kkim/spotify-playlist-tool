@@ -16,23 +16,28 @@ const credentials = {
   redirectUri: "http://localhost:3000/",
 };
 
+let spotifyApi = new spotifyWebApi(credentials);
+
 app.get("/", (req, res) => {
   console.log("Hello World!");
 });
 
 app.post("/refreshAccessToken", (req, res) => {
-  let spotifyApi = new spotifyWebApi(credentials);
+  console.log("reached");
   console.log(req.body.refreshToken);
+
   spotifyApi.setRefreshToken(req.body.refreshToken);
-  // const newAccessToken = spotifyApi.refreshAccessToken();
-  // console.log(newAccessToken);
-  spotifyApi.refreshAccessToken().then((data) => res.json(data));
+  spotifyApi.refreshAccessToken().then((data) => {
+    console.log("expires in: " + data.body.expires_in);
+    res.json({
+      accessToken: data.body.access_token,
+      expiresIn: data.body.expires_in,
+      refreshToken: spotifyApi.getRefreshToken(),
+    });
+  });
 });
 
 app.post("/login", (req, res) => {
-  //  setup
-  let spotifyApi = new spotifyWebApi(credentials);
-
   //  Get the "code" value posted from the client-side and get the user's accessToken from the spotify api
   const code = req.body.code;
 
