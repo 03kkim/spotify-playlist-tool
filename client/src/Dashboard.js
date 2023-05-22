@@ -2,6 +2,18 @@ import React, { useState, useEffect } from "react";
 import useAuth from "./useAuth";
 import SpotifyWebApi from "spotify-web-api-node";
 
+import ListSubheader from "@mui/material/ListSubheader";
+import List from "@mui/material/List";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
+import Collapse from "@mui/material/Collapse";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
+
 // Setting the spotifyApi, so that we can use it's functions
 const spotifyApi = new SpotifyWebApi({
   clientId: "2802a707032a4576ba6efcf043bfbc61",
@@ -13,6 +25,17 @@ const Dashboard = ({ code }) => {
   const [userPlaylists, setUserPlaylists] = useState([]);
   const [playlistTracks, setPlaylistTracks] = useState([]);
   const [finishedLoading, setFinishedLoading] = useState(false);
+  const [isPlaylistOpen, setIsPlaylistOpen] = useState([]);
+
+  const handleClick = (index) => {
+    setIsPlaylistOpen((existingItems) => {
+      return [
+        ...existingItems.slice(0, index),
+        !existingItems[index],
+        ...existingItems.slice(index + 1),
+      ];
+    });
+  };
 
   useEffect(() => {
     if (!accessToken) {
@@ -36,6 +59,7 @@ const Dashboard = ({ code }) => {
         obj.id = playlists[i].id;
         obj.items = tracks.body.items;
         setPlaylistTracks((oldArray) => [...oldArray, obj]);
+        setIsPlaylistOpen((oldArray) => [...oldArray, false]);
       }
       setFinishedLoading(true);
     });
@@ -46,27 +70,74 @@ const Dashboard = ({ code }) => {
 
   //   console.log("finished");
   // }, [playlistTracks]);
-
   return (
-    <div>
-      Playlists:
-      {userPlaylists.map((playlist, index) => {
-        return (
-          <div>
-            <b key={index}>{playlist.name}</b>
-            {/* {console.log(playlistTracks[index])} */}
-            <div>
-              {finishedLoading &&
-                playlistTracks[index].items.map((item, index) => {
-                  if (item.track !== null) {
-                    return <div>{item.track.name}</div>;
-                  }
-                })}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+    <Container
+      sx={{
+        bgcolor: "black",
+        color: "white",
+        height: "100vh",
+      }}
+      maxWidth="100%"
+    >
+      {finishedLoading ? (
+        <List
+          component="nav"
+          aria-labelledby="nested-list-subheader"
+          subheader={
+            <ListSubheader
+              component="div"
+              id="nested-list-subheader"
+              sx={{
+                bgcolor: "black",
+                color: "white",
+              }}
+            >
+              Playlists:
+            </ListSubheader>
+          }
+        >
+          {userPlaylists.map((playlist, index) => {
+            return (
+              <>
+                <ListItemButton onClick={() => handleClick(index)}>
+                  <ListItemText primary={playlist.name} />
+                  {isPlaylistOpen[index] ? <ExpandLess /> : <ExpandMore />}
+                </ListItemButton>
+                <Collapse
+                  in={isPlaylistOpen[index]}
+                  timeout="auto"
+                  unmountOnExit
+                >
+                  {finishedLoading &&
+                    playlistTracks[index].items.map((item, idx) => {
+                      if (item.track !== null) {
+                        return (
+                          <List component="div" disablePadding>
+                            <ListItemButton sx={{ pl: 4 }}>
+                              <ListItemText primary={item.track.name} />
+                            </ListItemButton>
+                          </List>
+                        );
+                      }
+                    })}
+                </Collapse>
+              </>
+            );
+          })}
+        </List>
+      ) : (
+        <Box
+          sx={{
+            display: "grid",
+            placeItems: "center",
+            height: "100vh",
+            backgroundColor: "black",
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      )}
+    </Container>
   );
 };
 
