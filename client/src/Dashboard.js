@@ -42,10 +42,8 @@ const Dashboard = ({ code }) => {
       console.log("no access token");
       return;
     }
-
     // Setting Up the spotifyApi with AccessToken so that we can use its functions anywhere in the component without setting AccessToken value again & again.
     spotifyApi.setAccessToken(accessToken);
-    spotifyApi.setRefreshToken(refreshToken);
 
     // Get user details with help of getMe() function
     spotifyApi.getMe().then((data) => {
