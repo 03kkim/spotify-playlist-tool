@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import useAuth from "./useAuth";
+import useAuth from "../hooks/useAuth";
 import SpotifyWebApi from "spotify-web-api-node";
 
 import ListSubheader from "@mui/material/ListSubheader";
@@ -9,6 +9,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Collapse from "@mui/material/Collapse";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import { Stack } from "@mui/material";
 
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
@@ -71,11 +72,7 @@ const Dashboard = ({ code }) => {
   // }, [playlistTracks]);
   return (
     <Container
-      sx={{
-        bgcolor: "black",
-        color: "white",
-        height: "100vh",
-      }}
+      sx={{ bgcolor: "black", color: "white", height: "100%" }}
       maxWidth="100%"
     >
       {finishedLoading ? (
@@ -110,10 +107,30 @@ const Dashboard = ({ code }) => {
                   {finishedLoading &&
                     playlistTracks[index].items.map((item, idx) => {
                       if (item.track !== null) {
+                        const artists = item.track.artists;
                         return (
                           <List component="div" disablePadding>
                             <ListItemButton sx={{ pl: 4 }}>
-                              <ListItemText primary={item.track.name} />
+                              <Stack
+                                direction="row"
+                                spacing={2}
+                                alignItems="center"
+                              >
+                                <ListItemText
+                                  primary={item.track.name + " -"}
+                                />
+                                <ListItemText
+                                  primary={
+                                    artists.length === 1
+                                      ? artists[0].name
+                                      : artists.map((artist, i) => {
+                                          return i === artists.length - 1
+                                            ? artist.name
+                                            : artist.name + ", ";
+                                        })
+                                  }
+                                />
+                              </Stack>
                             </ListItemButton>
                           </List>
                         );
