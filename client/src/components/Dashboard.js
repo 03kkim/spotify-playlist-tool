@@ -45,31 +45,61 @@ const Dashboard = ({ code }) => {
     }
     // Setting Up the spotifyApi with AccessToken so that we can use its functions anywhere in the component without setting AccessToken value again & again.
     spotifyApi.setAccessToken(accessToken);
-
+    let my_data;
     // Get user details with help of getMe() function
     spotifyApi.getMe().then((data) => {
       setMyData(data);
+      my_data = data;
+      // console.log(data);
     });
     spotifyApi.getUserPlaylists().then(async (data) => {
       const playlists = data.body.items;
       setUserPlaylists(playlists);
       for (let i = 0; i < playlists.length; i++) {
         const tracks = await spotifyApi.getPlaylistTracks(playlists[i].id);
+        let formattedItems = [];
+        let nonNullTracks = [];
+        for (let j = 0; j < tracks.body.items.length; j++) {
+          if (tracks.body.items[j].track !== null) {
+            nonNullTracks.push(tracks.body.items[j].track);
+          }
+        }
+        for (let j = 0; j < nonNullTracks.length; j++) {
+          const item = {};
+          // TODO: Make this dependent on ALL artists, not just the first (if any of them have top, then it counts)
+          const artistTopTracks = await spotifyApi.getArtistTopTracks(
+            nonNullTracks[j].artists[0].id,
+            my_data.body.country
+          );
+
+          // console.log(artistTopTracks);
+
+          item.isTopTrack = false;
+          for (let k = 0; k < artistTopTracks.body.tracks.length; k++) {
+            // console.log(nonNullTracks[j].id);
+            if (nonNullTracks[j].id === artistTopTracks.body.tracks[k].id) {
+              item.isTopTrack = true;
+            }
+          }
+          item.data = tracks.body.items[j];
+          formattedItems.push(item);
+        }
+        // console.log(formattedItems);
         const obj = {};
         obj.id = playlists[i].id;
-        obj.items = tracks.body.items;
+        obj.items = formattedItems;
         setPlaylistTracks((oldArray) => [...oldArray, obj]);
         setIsPlaylistOpen((oldArray) => [...oldArray, false]);
       }
+
       setFinishedLoading(true);
     });
   }, [accessToken]);
 
   // useEffect(() => {
-  //   console.log(playlistTracks);
+  //   console.log(spotifyApi.getArtistTopTracks(artistID, myData.body.country))
+  // })
 
-  //   console.log("finished");
-  // }, [playlistTracks]);
   return (
     <Container
       sx={{ bgcolor: "black", color: "white", height: "100%" }}
@@ -106,8 +136,8 @@ const Dashboard = ({ code }) => {
                 >
                   {finishedLoading &&
                     playlistTracks[index].items.map((item, idx) => {
-                      if (item.track !== null) {
-                        const artists = item.track.artists;
+                      if (item.data.track !== null) {
+                        const artists = item.data.track.artists;
                         return (
                           <List component="div" disablePadding>
                             <ListItemButton sx={{ pl: 4 }}>
@@ -117,8 +147,15 @@ const Dashboard = ({ code }) => {
                                 alignItems="center"
                               >
                                 <ListItemText
-                                  primary={item.track.name + " -"}
+                                  primary={item.data.track.name + " -"}
+                                  primaryTypographyProps={
+                                    item.isTopTrack && {
+                                      fontStyle: "italic",
+                                      fontWeight: "bold",
+                                    }
+                                  }
                                 />
+
                                 <ListItemText
                                   primary={
                                     artists.length === 1
