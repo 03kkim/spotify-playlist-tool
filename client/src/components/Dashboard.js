@@ -9,12 +9,12 @@ import ListItemText from "@mui/material/ListItemText";
 import Collapse from "@mui/material/Collapse";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
-import { Stack } from "@mui/material";
 
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 
+import Track from "./Track";
 // Setting the spotifyApi, so that we can use it's functions
 const spotifyApi = new SpotifyWebApi({
   clientId: "2802a707032a4576ba6efcf043bfbc61",
@@ -23,12 +23,9 @@ const spotifyApi = new SpotifyWebApi({
 const Dashboard = ({ code }) => {
   const { accessToken, refreshToken } = useAuth(code);
   const [myData, setMyData] = useState();
-  const [userPlaylists, setUserPlaylists] = useState([]);
-  const [playlistTracks, setPlaylistTracks] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
   const [finishedLoading, setFinishedLoading] = useState(false);
   const [isPlaylistOpen, setIsPlaylistOpen] = useState([]);
-
-  const [playlistCount, setPlaylistCount] = useState(20);
   const [topTrackCounts, setTopTrackCounts] = useState([]);
 
   const handleClick = (index) => {
@@ -58,7 +55,6 @@ const Dashboard = ({ code }) => {
 
       const data = await spotifyApi.getUserPlaylists();
       const playlists = data.body.items;
-      setUserPlaylists(playlists);
       for (let i = 0; i < playlists.length; i++) {
         const tracks = await spotifyApi.getPlaylistTracks(playlists[i].id);
 
@@ -96,13 +92,14 @@ const Dashboard = ({ code }) => {
         // console.log(formattedItems);
         const obj = {};
         obj.id = playlists[i].id;
+        obj.name = playlists[i].name;
         obj.items = formattedItems;
         newPlaylistTracks.push(obj);
         newIsPlaylistOpen.push(false);
         newTopTrackCounts.push(topTrackCount);
       }
       console.log({ newPlaylistTracks, newIsPlaylistOpen, newTopTrackCounts });
-      setPlaylistTracks(newPlaylistTracks);
+      setPlaylists(newPlaylistTracks);
       setIsPlaylistOpen(newIsPlaylistOpen);
       setTopTrackCounts(newTopTrackCounts);
       setFinishedLoading(true);
@@ -132,7 +129,7 @@ const Dashboard = ({ code }) => {
             </ListSubheader>
           }
         >
-          {userPlaylists.map((playlist, index) => {
+          {playlists.map((playlist, index) => {
             return (
               <>
                 <ListItemButton onClick={() => handleClick(index)}>
@@ -149,42 +146,9 @@ const Dashboard = ({ code }) => {
                   unmountOnExit
                 >
                   {finishedLoading &&
-                    playlistTracks[index].items.map((item, idx) => {
+                    playlists[index].items.map((item) => {
                       if (item.data.track !== null) {
-                        const artists = item.data.track.artists;
-                        return (
-                          <List component="div" disablePadding>
-                            <ListItemButton sx={{ pl: 4 }}>
-                              <Stack
-                                direction="row"
-                                spacing={2}
-                                alignItems="center"
-                              >
-                                <ListItemText
-                                  primary={item.data.track.name + " -"}
-                                  primaryTypographyProps={
-                                    item.isTopTrack && {
-                                      fontStyle: "italic",
-                                      fontWeight: "bold",
-                                    }
-                                  }
-                                />
-
-                                <ListItemText
-                                  primary={
-                                    artists.length === 1
-                                      ? artists[0].name
-                                      : artists.map((artist, i) => {
-                                          return i === artists.length - 1
-                                            ? artist.name
-                                            : artist.name + ", ";
-                                        })
-                                  }
-                                />
-                              </Stack>
-                            </ListItemButton>
-                          </List>
-                        );
+                        return <Track item={item} />;
                       }
                     })}
                 </Collapse>

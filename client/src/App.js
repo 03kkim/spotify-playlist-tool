@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import Login from "./Login";
+import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
 
 // 'URLSearchParams(window.location.search)' will get url string after the '?' & .get() will get the code value from the url
