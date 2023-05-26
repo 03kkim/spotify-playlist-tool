@@ -28,6 +28,9 @@ const Dashboard = ({ code }) => {
   const [finishedLoading, setFinishedLoading] = useState(false);
   const [isPlaylistOpen, setIsPlaylistOpen] = useState([]);
 
+  const [playlistCount, setPlaylistCount] = useState(20);
+  const [topTrackCounts, setTopTrackCounts] = useState([]);
+
   const handleClick = (index) => {
     setIsPlaylistOpen((existingItems) => {
       return [
@@ -43,27 +46,32 @@ const Dashboard = ({ code }) => {
       console.log("no access token");
       return;
     }
-    // Setting Up the spotifyApi with AccessToken so that we can use its functions anywhere in the component without setting AccessToken value again & again.
-    spotifyApi.setAccessToken(accessToken);
-    let my_data;
-    // Get user details with help of getMe() function
-    spotifyApi.getMe().then((data) => {
-      setMyData(data);
-      my_data = data;
-      // console.log(data);
-    });
-    spotifyApi.getUserPlaylists().then(async (data) => {
+
+    async function fetchData() {
+      let newPlaylistTracks = [];
+      let newIsPlaylistOpen = [];
+      let newTopTrackCounts = [];
+      // Setting Up the spotifyApi with AccessToken so that we can use its functions anywhere in the component without setting AccessToken value again & again.
+      spotifyApi.setAccessToken(accessToken);
+      let my_data = await spotifyApi.getMe();
+      setMyData(my_data);
+
+      const data = await spotifyApi.getUserPlaylists();
       const playlists = data.body.items;
       setUserPlaylists(playlists);
       for (let i = 0; i < playlists.length; i++) {
         const tracks = await spotifyApi.getPlaylistTracks(playlists[i].id);
+
         let formattedItems = [];
         let nonNullTracks = [];
+
         for (let j = 0; j < tracks.body.items.length; j++) {
           if (tracks.body.items[j].track !== null) {
             nonNullTracks.push(tracks.body.items[j].track);
           }
         }
+
+        let topTrackCount = 0;
         for (let j = 0; j < nonNullTracks.length; j++) {
           const item = {};
           // TODO: Make this dependent on ALL artists, not just the first (if any of them have top, then it counts)
@@ -79,6 +87,7 @@ const Dashboard = ({ code }) => {
             // console.log(nonNullTracks[j].id);
             if (nonNullTracks[j].id === artistTopTracks.body.tracks[k].id) {
               item.isTopTrack = true;
+              topTrackCount += 1;
             }
           }
           item.data = tracks.body.items[j];
@@ -88,17 +97,18 @@ const Dashboard = ({ code }) => {
         const obj = {};
         obj.id = playlists[i].id;
         obj.items = formattedItems;
-        setPlaylistTracks((oldArray) => [...oldArray, obj]);
-        setIsPlaylistOpen((oldArray) => [...oldArray, false]);
+        newPlaylistTracks.push(obj);
+        newIsPlaylistOpen.push(false);
+        newTopTrackCounts.push(topTrackCount);
       }
-
+      console.log({ newPlaylistTracks, newIsPlaylistOpen, newTopTrackCounts });
+      setPlaylistTracks(newPlaylistTracks);
+      setIsPlaylistOpen(newIsPlaylistOpen);
+      setTopTrackCounts(newTopTrackCounts);
       setFinishedLoading(true);
-    });
+    }
+    fetchData();
   }, [accessToken]);
-
-  // useEffect(() => {
-  //   console.log(spotifyApi.getArtistTopTracks(artistID, myData.body.country))
-  // })
 
   return (
     <Container
@@ -126,7 +136,11 @@ const Dashboard = ({ code }) => {
             return (
               <>
                 <ListItemButton onClick={() => handleClick(index)}>
-                  <ListItemText primary={playlist.name} />
+                  <ListItemText
+                    primary={`${playlist.name} (${topTrackCounts[
+                      index
+                    ].toString()})`}
+                  />
                   {isPlaylistOpen[index] ? <ExpandLess /> : <ExpandMore />}
                 </ListItemButton>
                 <Collapse
