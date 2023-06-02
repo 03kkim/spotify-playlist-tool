@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import useAuth from "../hooks/useAuth";
 import SpotifyWebApi from "spotify-web-api-node";
-
+import CheckIcon from "@mui/icons-material/Check";
 import ListSubheader from "@mui/material/ListSubheader";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -9,6 +9,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Collapse from "@mui/material/Collapse";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import { Paper, Stack, Grid } from "@mui/material";
 
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
@@ -25,17 +26,12 @@ const Dashboard = ({ code }) => {
   const [myData, setMyData] = useState();
   const [playlists, setPlaylists] = useState([]);
   const [finishedLoading, setFinishedLoading] = useState(false);
-  const [isPlaylistOpen, setIsPlaylistOpen] = useState([]);
+  const [curPlaylistIdx, setCurPlaylistIdx] = useState(0);
   const [topTrackCounts, setTopTrackCounts] = useState([]);
+  const [playlistFeatures, setPlaylistFeatures] = useState([]);
 
   const handleClick = (index) => {
-    setIsPlaylistOpen((existingItems) => {
-      return [
-        ...existingItems.slice(0, index),
-        !existingItems[index],
-        ...existingItems.slice(index + 1),
-      ];
-    });
+    setCurPlaylistIdx(index);
   };
 
   useEffect(() => {
@@ -46,7 +42,6 @@ const Dashboard = ({ code }) => {
 
     async function fetchData() {
       let newPlaylistTracks = [];
-      let newIsPlaylistOpen = [];
       let newTopTrackCounts = [];
       // Setting Up the spotifyApi with AccessToken so that we can use its functions anywhere in the component without setting AccessToken value again & again.
       spotifyApi.setAccessToken(accessToken);
@@ -55,52 +50,87 @@ const Dashboard = ({ code }) => {
 
       const data = await spotifyApi.getUserPlaylists();
       const playlists = data.body.items;
-      for (let i = 0; i < playlists.length; i++) {
-        const tracks = await spotifyApi.getPlaylistTracks(playlists[i].id);
-
+      for await (const playlist of playlists) {
+        const tracks = await spotifyApi.getPlaylistTracks(playlist.id);
+        // console.log(tracks);
         let formattedItems = [];
         let nonNullTracks = [];
-
-        for (let j = 0; j < tracks.body.items.length; j++) {
-          if (tracks.body.items[j].track !== null) {
-            nonNullTracks.push(tracks.body.items[j].track);
-          }
+        // console.log(tracks.body.items.length);
+        for await (const track of tracks.body.items) {
+          nonNullTracks.push(
+            track.track === undefined ? ["bruh"] : track.track
+          );
         }
 
         let topTrackCount = 0;
-        for (let j = 0; j < nonNullTracks.length; j++) {
+        for await (const track of nonNullTracks) {
           const item = {};
           // TODO: Make this dependent on ALL artists, not just the first (if any of them have top, then it counts)
           const artistTopTracks = await spotifyApi.getArtistTopTracks(
-            nonNullTracks[j].artists[0].id,
+            track.artists[0].id,
             my_data.body.country
           );
 
-          // console.log(artistTopTracks);
+          let nonNullArtistTopTracks = [];
+          for await (const topTrack of artistTopTracks.body.tracks) {
+            if (topTrack !== null) {
+              nonNullArtistTopTracks.push(topTrack);
+              // console.log(nonNullArtistTopTracks[topTrackIdx]);
+            }
+          }
 
           item.isTopTrack = false;
-          for (let k = 0; k < artistTopTracks.body.tracks.length; k++) {
-            // console.log(nonNullTracks[j].id);
-            if (nonNullTracks[j].id === artistTopTracks.body.tracks[k].id) {
+          for await (const topTrack of nonNullArtistTopTracks) {
+            if (track.id === topTrack.id) {
               item.isTopTrack = true;
               topTrackCount += 1;
             }
           }
-          item.data = tracks.body.items[j];
+          // try {
+          //   if (track === null) console.log("bruh");
+          // } catch (err) {
+          //   console.log(err);
+          // }
+          // if (track === null) console.log("bruh");
+
+          item.data = track;
           formattedItems.push(item);
         }
+
         // console.log(formattedItems);
         const obj = {};
-        obj.id = playlists[i].id;
-        obj.name = playlists[i].name;
+        obj.id = playlist.id;
+        obj.name = playlist.name;
         obj.items = formattedItems;
+
+        let ids = [];
+        for (const item of obj.items) {
+          ids.push(item.data.id);
+        }
+
+        let audioFeatures;
+
+        try {
+          // console.log(trackIdx + "/" + nonNullTracks.length);
+          // track.id === null && console.log(track);
+          audioFeatures = await spotifyApi.getAudioFeaturesForTracks(ids);
+          console.log(audioFeatures);
+        } catch (err) {
+          console.log("bruh");
+          console.log(err);
+        }
+        for (let i = 0; i < obj.items.length; i++) {
+          obj.items[i].audioFeatures = audioFeatures.body.audio_features[i];
+        }
+
         newPlaylistTracks.push(obj);
-        newIsPlaylistOpen.push(false);
         newTopTrackCounts.push(topTrackCount);
       }
-      console.log({ newPlaylistTracks, newIsPlaylistOpen, newTopTrackCounts });
+
+      // console.log(track);
+
+      console.log({ newPlaylistTracks, newTopTrackCounts });
       setPlaylists(newPlaylistTracks);
-      setIsPlaylistOpen(newIsPlaylistOpen);
       setTopTrackCounts(newTopTrackCounts);
       setFinishedLoading(true);
     }
@@ -108,67 +138,97 @@ const Dashboard = ({ code }) => {
   }, [accessToken]);
 
   return (
-    <Container
-      sx={{ bgcolor: "black", color: "white", height: "100%" }}
-      maxWidth="100%"
-    >
+    <Grid container>
       {finishedLoading ? (
-        <List
-          component="nav"
-          aria-labelledby="nested-list-subheader"
-          subheader={
-            <ListSubheader
-              component="div"
-              id="nested-list-subheader"
-              sx={{
-                bgcolor: "black",
-                color: "white",
-              }}
-            >
-              Playlists:
-            </ListSubheader>
-          }
-        >
-          {playlists.map((playlist, index) => {
-            return (
-              <>
-                <ListItemButton onClick={() => handleClick(index)}>
-                  <ListItemText
-                    primary={`${playlist.name} (${topTrackCounts[
-                      index
-                    ].toString()})`}
-                  />
-                  {isPlaylistOpen[index] ? <ExpandLess /> : <ExpandMore />}
-                </ListItemButton>
-                <Collapse
-                  in={isPlaylistOpen[index]}
-                  timeout="auto"
-                  unmountOnExit
-                >
-                  {finishedLoading &&
-                    playlists[index].items.map((item) => {
-                      if (item.data.track !== null) {
-                        return <Track item={item} />;
-                      }
-                    })}
-                </Collapse>
-              </>
-            );
-          })}
-        </List>
+        <>
+          <Grid
+            item
+            xs={12}
+            sx={{ textAlign: "center" }}
+            component="h1"
+            height="7vh"
+          >
+            Title
+          </Grid>
+          <Grid item xs={12} container spacing={2}>
+            <Grid item xs={6} sx={{ height: "100%" }}>
+              <Paper elevation={3} sx={{ height: "90vh", overflow: "auto" }}>
+                Playlists:
+                <List component="nav" aria-labelledby="nested-list-subheader">
+                  {playlists.map((playlist, index) => {
+                    return (
+                      <>
+                        <ListItemButton onClick={() => handleClick(index)}>
+                          <ListItemText
+                            primary={`${playlist.name} (${topTrackCounts[
+                              index
+                            ].toString()}/${playlists[
+                              curPlaylistIdx
+                            ].items.length.toString()})`}
+                          />
+                          {index === curPlaylistIdx && <CheckIcon />}
+                        </ListItemButton>
+                      </>
+                    );
+                  })}
+                </List>
+              </Paper>
+            </Grid>
+            {
+              <Grid item xs={6}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sx={{ height: "40vh", overflow: "auto" }}>
+                    <Paper elevation={3}>
+                      <Box>Songs:</Box>
+                      <List
+                        component="nav"
+                        aria-labelledby="nested-list-subheader"
+                      >
+                        {playlists[curPlaylistIdx].items.map((item) => {
+                          if (item.data.track !== null) {
+                            return <Track item={item} />;
+                          }
+                        })}
+                      </List>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Paper
+                      elevation={3}
+                      sx={{ height: "50vh", overflow: "auto" }}
+                    >
+                      <Box>Aggregated Features:</Box>
+                      <List
+                        component="nav"
+                        aria-labelledby="nested-list-subheader"
+                      >
+                        {playlists[curPlaylistIdx].items.map((item) => {
+                          if (item.data.track !== null) {
+                            return <Track item={item} />;
+                          }
+                        })}
+                      </List>
+                    </Paper>
+                  </Grid>
+                </Grid>
+              </Grid>
+            }
+          </Grid>
+        </>
       ) : (
-        <Box
-          sx={{
-            display: "grid",
-            placeItems: "center",
-            height: "100vh",
-            backgroundColor: "black",
-          }}
-        >
-          <CircularProgress />
-        </Box>
+        <Grid xs={12}>
+          <Box
+            sx={{
+              display: "grid",
+              placeItems: "center",
+              height: "100vh",
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        </Grid>
       )}
-    </Container>
+    </Grid>
   );
 };
 
