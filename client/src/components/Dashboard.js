@@ -4,7 +4,6 @@ import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import { Paper, Grid } from "@mui/material";
-
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import usePlaylists from "../hooks/usePlaylists";
@@ -12,8 +11,6 @@ import Track from "./Track";
 
 const Dashboard = ({ code }) => {
   const {
-    accessToken,
-    myData,
     playlists,
     finishedLoading,
     curPlaylistIdx,
@@ -47,7 +44,7 @@ const Dashboard = ({ code }) => {
                             primary={`${playlist.name} (${topTrackCounts[
                               index
                             ].toString()}/${playlists[
-                              curPlaylistIdx
+                              index
                             ].items.length.toString()})`}
                           />
                           {index === curPlaylistIdx && <CheckIcon />}

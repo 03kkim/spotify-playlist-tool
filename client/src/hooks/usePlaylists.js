@@ -6,10 +6,8 @@ const spotifyApi = new SpotifyWebApi({
   clientId: "2802a707032a4576ba6efcf043bfbc61",
 });
 
-const usePlaylists = ({ code }) => {
-  console.log(code);
+const usePlaylists = (code) => {
   const { accessToken, refreshToken } = useAuth(code);
-  const [myData, setMyData] = useState();
   const [playlists, setPlaylists] = useState([]);
   const [finishedLoading, setFinishedLoading] = useState(false);
   const [curPlaylistIdx, setCurPlaylistIdx] = useState(0);
@@ -18,6 +16,16 @@ const usePlaylists = ({ code }) => {
 
   const handleClick = (index) => {
     setCurPlaylistIdx(index);
+  };
+
+  const getNonNull = (array, func = (i) => i) => {
+    let toReturn = [];
+    for (const item of array) {
+      if (item !== null) {
+        toReturn.push(func(item));
+      }
+    }
+    return toReturn;
   };
 
   useEffect(() => {
@@ -29,27 +37,23 @@ const usePlaylists = ({ code }) => {
     async function fetchData() {
       let newPlaylistTracks = [];
       let newTopTrackCounts = [];
-      // Setting Up the spotifyApi with AccessToken so that we can use its functions anywhere in the component without setting AccessToken value again & again.
+
       spotifyApi.setAccessToken(accessToken);
       let my_data = await spotifyApi.getMe();
-      setMyData(my_data);
 
       const data = await spotifyApi.getUserPlaylists();
       const playlists = data.body.items;
-      for await (const playlist of playlists) {
+      for (const playlist of playlists) {
         const tracks = await spotifyApi.getPlaylistTracks(playlist.id);
         // console.log(tracks);
         let formattedItems = [];
-        let nonNullTracks = [];
-        // console.log(tracks.body.items.length);
-        for await (const track of tracks.body.items) {
-          nonNullTracks.push(
-            track.track === undefined ? ["bruh"] : track.track
-          );
-        }
+        let nonNullTracks = getNonNull(
+          tracks.body.items,
+          (track) => track.track
+        );
 
         let topTrackCount = 0;
-        for await (const track of nonNullTracks) {
+        for (const track of nonNullTracks) {
           const item = {};
           // TODO: Make this dependent on ALL artists, not just the first (if any of them have top, then it counts)
           const artistTopTracks = await spotifyApi.getArtistTopTracks(
@@ -57,15 +61,10 @@ const usePlaylists = ({ code }) => {
             my_data.body.country
           );
 
-          let nonNullArtistTopTracks = [];
-          for await (const topTrack of artistTopTracks.body.tracks) {
-            if (topTrack !== null) {
-              nonNullArtistTopTracks.push(topTrack);
-            }
-          }
+          let nonNullArtistTopTracks = getNonNull(artistTopTracks.body.tracks);
 
           item.isTopTrack = false;
-          for await (const topTrack of nonNullArtistTopTracks) {
+          for (const topTrack of nonNullArtistTopTracks) {
             if (track.id === topTrack.id) {
               item.isTopTrack = true;
               topTrackCount += 1;
@@ -76,7 +75,6 @@ const usePlaylists = ({ code }) => {
           formattedItems.push(item);
         }
 
-        // console.log(formattedItems);
         const obj = {};
         obj.id = playlist.id;
         obj.name = playlist.name;
@@ -111,8 +109,6 @@ const usePlaylists = ({ code }) => {
     fetchData();
   }, [accessToken]);
   return {
-    accessToken,
-    myData,
     playlists,
     finishedLoading,
     curPlaylistIdx,

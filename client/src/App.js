@@ -7,7 +7,6 @@ import CssBaseline from "@mui/material/CssBaseline";
 
 // 'URLSearchParams(window.location.search)' will get url string after the '?' & .get() will get the code value from the url
 const code = new URLSearchParams(window.location.search).get("code");
-
 const darkTheme = createTheme({
   palette: {
     mode: "dark",
