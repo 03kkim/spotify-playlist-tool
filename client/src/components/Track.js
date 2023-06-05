@@ -7,13 +7,15 @@ import ListItemText from "@mui/material/ListItemText";
 import { Stack } from "@mui/material";
 
 function Track({ item }) {
-  const artists = item.data.track.artists;
+  const artists = item.data.artists;
+  // console.log(`track: ${item.data} | artists: ${artists}`);
+
   return (
     <List component="div" disablePadding>
       <ListItemButton sx={{ pl: 4 }}>
         <Stack direction="row" spacing={2} alignItems="center">
           <ListItemText
-            primary={item.data.track.name + " -"}
+            primary={item.data.name + " -"}
             primaryTypographyProps={
               item.isTopTrack && {
                 fontStyle: "italic",
