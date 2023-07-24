@@ -44,6 +44,7 @@ const usePlaylists = (code) => {
       const data = await spotifyApi.getUserPlaylists();
       const playlists = data.body.items;
       for (const playlist of playlists) {
+        // console.log("Made it here");
         const tracks = await spotifyApi.getPlaylistTracks(playlist.id);
         // console.log(tracks);
         let formattedItems = [];
@@ -56,18 +57,25 @@ const usePlaylists = (code) => {
         for (const track of nonNullTracks) {
           const item = {};
           // TODO: Make this dependent on ALL artists, not just the first (if any of them have top, then it counts)
-          const artistTopTracks = await spotifyApi.getArtistTopTracks(
-            track.artists[0].id,
-            my_data.body.country
-          );
 
-          let nonNullArtistTopTracks = getNonNull(artistTopTracks.body.tracks);
-
+          // Something weird happens with some songs where the artist has no ID
+          // In this case, we'll just assume the track is not a top track for any artist since there are no ID to match it to
           item.isTopTrack = false;
-          for (const topTrack of nonNullArtistTopTracks) {
-            if (track.id === topTrack.id) {
-              item.isTopTrack = true;
-              topTrackCount += 1;
+          if (track.artists[0].id !== null) {
+            // console.log(JSON.stringify(track.artists));
+            const artistTopTracks = await spotifyApi.getArtistTopTracks(
+              track.artists[0].id,
+              my_data.body.country
+            );
+
+            const nonNullArtistTopTracks = getNonNull(
+              artistTopTracks.body.tracks
+            );
+            for (const topTrack of nonNullArtistTopTracks) {
+              if (track.id === topTrack.id) {
+                item.isTopTrack = true;
+                topTrackCount += 1;
+              }
             }
           }
 
