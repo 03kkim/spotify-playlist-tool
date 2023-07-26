@@ -10,26 +10,14 @@ import usePlaylists from "../hooks/usePlaylists";
 import Track from "./Track";
 
 const Dashboard = ({ code }) => {
-  const {
-    playlists,
-    finishedLoading,
-    curPlaylistIdx,
-    topTrackCounts,
-    playlistFeatures,
-    handleClick,
-  } = usePlaylists(code);
+  const { playlists, finishedLoading, curPlaylistIdx, topTrackCounts, playlistFeatures, handleClick } =
+    usePlaylists(code);
   return (
     <Grid container>
       {finishedLoading ? (
         <>
-          <Grid
-            item
-            xs={12}
-            sx={{ textAlign: "center" }}
-            component="h1"
-            height="7vh"
-          >
-            Title
+          <Grid item xs={12} sx={{ textAlign: "center" }} component="h1" height="7vh">
+            Spotify Playlist Tool
           </Grid>
           <Grid item xs={12} container spacing={2}>
             <Grid item xs={6} sx={{ height: "100%" }}>
@@ -40,12 +28,11 @@ const Dashboard = ({ code }) => {
                     return (
                       <>
                         <ListItemButton onClick={() => handleClick(index)}>
+                          {/* Rounded to the nearest percent */}
                           <ListItemText
-                            primary={`${playlist.name} (${topTrackCounts[
-                              index
-                            ].toString()}/${playlists[
-                              index
-                            ].items.length.toString()})`}
+                            primary={`${playlist.name} - ${Math.round(
+                              100 - (topTrackCounts[index] / playlists[index].items.length) * 100
+                            ).toString()}%`}
                           />
                           {index === curPlaylistIdx && <CheckIcon />}
                         </ListItemButton>
@@ -61,10 +48,7 @@ const Dashboard = ({ code }) => {
                   <Grid item xs={12} sx={{ height: "40vh", overflow: "auto" }}>
                     <Paper elevation={3}>
                       <Box>Songs:</Box>
-                      <List
-                        component="nav"
-                        aria-labelledby="nested-list-subheader"
-                      >
+                      <List component="nav" aria-labelledby="nested-list-subheader">
                         {playlists[curPlaylistIdx].items.map((item) => {
                           if (item.data.track !== null) {
                             return <Track item={item} />;
@@ -74,20 +58,53 @@ const Dashboard = ({ code }) => {
                     </Paper>
                   </Grid>
                   <Grid item xs={12}>
-                    <Paper
-                      elevation={3}
-                      sx={{ height: "50vh", overflow: "auto" }}
-                    >
+                    <Paper elevation={3} sx={{ height: "50vh", overflow: "auto" }}>
                       <Box>Aggregated Features:</Box>
-                      <List
-                        component="nav"
-                        aria-labelledby="nested-list-subheader"
-                      >
-                        {playlists[curPlaylistIdx].items.map((item) => {
-                          if (item.data.track !== null) {
-                            return <Track item={item} />;
-                          }
-                        })}
+                      <List component="nav" aria-labelledby="nested-list-subheader">
+                        <ListItemText
+                          sx={{ pl: 4 }}
+                          primary={`Acousticness: ${playlistFeatures[curPlaylistIdx].acousticness}`}
+                        ></ListItemText>
+                        <ListItemText
+                          sx={{ pl: 4 }}
+                          primary={`Danceability: ${playlistFeatures[curPlaylistIdx].danceability}`}
+                        ></ListItemText>
+                        <ListItemText
+                          sx={{ pl: 4 }}
+                          primary={`Duration (ms): ${playlistFeatures[curPlaylistIdx].durationMs}`}
+                        ></ListItemText>
+                        <ListItemText
+                          sx={{ pl: 4 }}
+                          primary={`Energy: ${playlistFeatures[curPlaylistIdx].energy}`}
+                        ></ListItemText>
+                        <ListItemText
+                          sx={{ pl: 4 }}
+                          primary={`Instrumentalness: ${playlistFeatures[curPlaylistIdx].instrumentalness}`}
+                        ></ListItemText>
+                        <ListItemText
+                          sx={{ pl: 4 }}
+                          primary={`Liveness: ${playlistFeatures[curPlaylistIdx].liveness}`}
+                        ></ListItemText>
+                        <ListItemText
+                          sx={{ pl: 4 }}
+                          primary={`Loudness: ${playlistFeatures[curPlaylistIdx].loudness}`}
+                        ></ListItemText>
+                        <ListItemText
+                          sx={{ pl: 4 }}
+                          primary={`Mode: ${playlistFeatures[curPlaylistIdx].mode}`}
+                        ></ListItemText>
+                        <ListItemText
+                          sx={{ pl: 4 }}
+                          primary={`Speechiness: ${playlistFeatures[curPlaylistIdx].speechiness}`}
+                        ></ListItemText>
+                        <ListItemText
+                          sx={{ pl: 4 }}
+                          primary={`Tempo: ${playlistFeatures[curPlaylistIdx].tempo}`}
+                        ></ListItemText>
+                        <ListItemText
+                          sx={{ pl: 4 }}
+                          primary={`Valence: ${playlistFeatures[curPlaylistIdx].valence}`}
+                        ></ListItemText>
                       </List>
                     </Paper>
                   </Grid>
