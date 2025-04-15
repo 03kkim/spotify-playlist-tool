@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/refreshAccessToken", (req, res) => {
-  console.log("reached");
+  // console.log("reached");
   console.log(req.body.refreshToken);
 
   spotifyApi.setRefreshToken(req.body.refreshToken);
@@ -45,7 +45,7 @@ app.post("/login", (req, res) => {
   spotifyApi
     .authorizationCodeGrant(code)
     .then((data) => {
-      // Returning the User's AccessToken in the json formate
+      // Returning the User's AccessToken in the json format
       res.json({
         accessToken: data.body.access_token,
         refreshToken: data.body.refresh_token,

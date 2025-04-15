@@ -10,8 +10,7 @@ import usePlaylists from "../hooks/usePlaylists";
 import Track from "./Track";
 
 const Dashboard = ({ code }) => {
-  const { playlists, finishedLoading, curPlaylistIdx, topTrackCounts, playlistFeatures, handleClick } =
-    usePlaylists(code);
+  const { playlists, finishedLoading, curPlaylistIdx, topTrackCounts, handleClick } = usePlaylists(code);
   return (
     <Grid container>
       {finishedLoading ? (
@@ -58,55 +57,7 @@ const Dashboard = ({ code }) => {
                     </Paper>
                   </Grid>
                   <Grid item xs={12}>
-                    <Paper elevation={3} sx={{ height: "50vh", overflow: "auto" }}>
-                      <Box>Aggregated Features:</Box>
-                      <List component="nav" aria-labelledby="nested-list-subheader">
-                        <ListItemText
-                          sx={{ pl: 4 }}
-                          primary={`Acousticness: ${playlistFeatures[curPlaylistIdx].acousticness}`}
-                        ></ListItemText>
-                        <ListItemText
-                          sx={{ pl: 4 }}
-                          primary={`Danceability: ${playlistFeatures[curPlaylistIdx].danceability}`}
-                        ></ListItemText>
-                        <ListItemText
-                          sx={{ pl: 4 }}
-                          primary={`Duration (ms): ${playlistFeatures[curPlaylistIdx].durationMs}`}
-                        ></ListItemText>
-                        <ListItemText
-                          sx={{ pl: 4 }}
-                          primary={`Energy: ${playlistFeatures[curPlaylistIdx].energy}`}
-                        ></ListItemText>
-                        <ListItemText
-                          sx={{ pl: 4 }}
-                          primary={`Instrumentalness: ${playlistFeatures[curPlaylistIdx].instrumentalness}`}
-                        ></ListItemText>
-                        <ListItemText
-                          sx={{ pl: 4 }}
-                          primary={`Liveness: ${playlistFeatures[curPlaylistIdx].liveness}`}
-                        ></ListItemText>
-                        <ListItemText
-                          sx={{ pl: 4 }}
-                          primary={`Loudness: ${playlistFeatures[curPlaylistIdx].loudness}`}
-                        ></ListItemText>
-                        <ListItemText
-                          sx={{ pl: 4 }}
-                          primary={`Mode: ${playlistFeatures[curPlaylistIdx].mode}`}
-                        ></ListItemText>
-                        <ListItemText
-                          sx={{ pl: 4 }}
-                          primary={`Speechiness: ${playlistFeatures[curPlaylistIdx].speechiness}`}
-                        ></ListItemText>
-                        <ListItemText
-                          sx={{ pl: 4 }}
-                          primary={`Tempo: ${playlistFeatures[curPlaylistIdx].tempo}`}
-                        ></ListItemText>
-                        <ListItemText
-                          sx={{ pl: 4 }}
-                          primary={`Valence: ${playlistFeatures[curPlaylistIdx].valence}`}
-                        ></ListItemText>
-                      </List>
-                    </Paper>
+                    <Paper elevation={3} sx={{ height: "50vh", overflow: "auto" }}></Paper>
                   </Grid>
                 </Grid>
               </Grid>
